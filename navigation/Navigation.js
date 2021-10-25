@@ -7,6 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import LoginScreen from "../screens/Login";
 
 const Stack = createStackNavigator();
 
@@ -42,19 +43,26 @@ const Navigation = () => {
       </View>
     );
   }
-  if (Info) {
-    return (
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Home">
-            {(props) => <HomeScreen {...props} checkAuth={checkAuth} />}
-          </Stack.Screen>
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
-  } else {
-    return <Register checkAuth={checkAuth} />;
-  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="register"
+          component={Register}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="Home">
+          {(props) => <HomeScreen {...props} checkAuth={checkAuth} />}
+        </Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
 };
 
 export default Navigation;

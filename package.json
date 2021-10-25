@@ -16,6 +16,7 @@
     "expo-image-picker": "~11.0.3",
     "expo-status-bar": "~1.1.0",
     "fiction-expo-restart": "^1.1.0",
+    "firebase": "8.2.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-native": "0.64.2",

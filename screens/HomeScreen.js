@@ -14,13 +14,16 @@ import CustomHeaderButton from "../components/CustomHeaderButton";
 import * as ImagePicker from "expo-image-picker";
 import data from "../data/data";
 import PostComponent from "../components/PostComponent";
+import { firebase } from "@firebase/app";
+
+import "firebase/auth";
 
 const profile = require("../assets/profilepic.png");
 
-const HomeScreen = ({ checkAuth, navigation }) => {
+const HomeScreen = ({ navigation }) => {
   const [ImageUrl, setImageUrl] = useState(null);
   const [postImage, setpostImage] = useState(null);
-  const [Name, setName] = useState("");
+  const [Name, setName] = useState("Rakshith");
   const [desc, setdesc] = useState("");
   const [Data, setData] = useState(data);
 
@@ -35,15 +38,14 @@ const HomeScreen = ({ checkAuth, navigation }) => {
     });
   }, [navigation]);
   const logout = async () => {
-    await AsyncStorage.removeItem("userData");
-    checkAuth();
+    await firebase.auth().signOut();
+    navigation.replace("login");
   };
 
   const getUserData = async () => {
-    const data = await AsyncStorage.getItem("userData");
-    const tranformdata = JSON.parse(data);
-    setImageUrl(tranformdata.ImageUrl);
-    setName(tranformdata.Name);
+    const userinfo = await firebase.auth();
+    setImageUrl(userinfo.currentUser.photoURL);
+    setName(userinfo.currentUser.displayName);
   };
   const selectImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
