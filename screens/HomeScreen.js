@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Button,
   FlatList,
   Image,
@@ -8,44 +9,30 @@ import {
   TextInput,
   View,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { HeaderButtons, Item } from "react-navigation-header-buttons";
-import CustomHeaderButton from "../components/CustomHeaderButton";
 import * as ImagePicker from "expo-image-picker";
 import data from "../data/data";
 import PostComponent from "../components/PostComponent";
 import { firebase } from "@firebase/app";
 
 import "firebase/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { currentUser } from "../store/action";
 
 const profile = require("../assets/profilepic.png");
 
 const HomeScreen = ({ navigation }) => {
-  const [ImageUrl, setImageUrl] = useState(null);
   const [postImage, setpostImage] = useState(null);
-  const [Name, setName] = useState("Rakshith");
   const [desc, setdesc] = useState("");
   const [Data, setData] = useState(data);
+  const [refreshing, setrefreshing] = useState(false);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: "Home",
-      headerRight: () => (
-        <HeaderButtons HeaderButtonComponent={CustomHeaderButton}>
-          <Item title="logout" iconName="logout" onPress={logout} />
-        </HeaderButtons>
-      ),
-    });
-  }, [navigation]);
-  const logout = async () => {
-    await firebase.auth().signOut();
-    navigation.replace("login");
-  };
+  const dispatch = useDispatch();
+
+  const currentUserinfo = useSelector((state) => state.Info.auth);
 
   const getUserData = async () => {
     const userinfo = await firebase.auth();
-    setImageUrl(userinfo.currentUser.photoURL);
-    setName(userinfo.currentUser.displayName);
+    dispatch(currentUser(userinfo.currentUser.providerData[0]));
   };
   const selectImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -60,44 +47,53 @@ const HomeScreen = ({ navigation }) => {
   };
 
   const postIt = () => {
-    const post = {
-      id: new Date().getTime(),
-      profile: ImageUrl ? ImageUrl : null,
-      name: Name,
-      desc: desc,
-      image: postImage ? postImage : null,
-    };
-    setData([...Data, post]);
-    setpostImage(null);
-    setdesc("");
+    // console.log(desc);
+    // console.log(typeof desc);
+    // console.log(typeof parseInt(desc));
+    // const post = {
+    //   id: new Date().getTime(),
+    //   profile: ImageUrl ? ImageUrl : null,
+    //   name: Name,
+    //   desc: desc,
+    //   image: postImage ? postImage : null,
+    // };
+    // setData([...Data, post]);
+    // setpostImage(null);
+    // setdesc("");
   };
   useEffect(() => {
-    getUserData();
+    setTimeout(() => {
+      getUserData();
+    }, 1000);
   }, []);
 
   return (
     <View style={styles.container}>
       <FlatList
+        // onRefresh={getUserData}
+        // refreshing={refreshing}
         ListHeaderComponent={
           <View style={styles.createContainer}>
             <View style={styles.title}>
               <Image
                 source={
-                  ImageUrl
+                  currentUserinfo
                     ? {
-                        uri: ImageUrl,
+                        uri: currentUserinfo.photoURL,
                       }
                     : profile
                 }
                 style={styles.image}
               />
-              <Text style={styles.Name}>{Name}</Text>
+              <Text style={styles.Name}>{currentUserinfo?.displayName}</Text>
             </View>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.input}
                 placeholder="what's on your mind"
                 value={desc}
+                // keyboardType="numeric"
+                // onChange={(e) => setdesc(e.target.value)}
                 onChangeText={(e) => setdesc(e)}
               />
               {postImage && (
@@ -115,7 +111,7 @@ const HomeScreen = ({ navigation }) => {
                 title="Post"
                 color="green"
                 onPress={postIt}
-                disabled={desc ? false : true}
+                // disabled={desc ? false : true}
               />
             </View>
           </View>

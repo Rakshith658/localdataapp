@@ -19,7 +19,7 @@ const LoginScreen = ({ navigation }) => {
   useEffect(() => {
     const unsubscribe = firebase.auth().onAuthStateChanged((authUser) => {
       if (authUser) {
-        navigation.replace("Home");
+        navigation.replace("home");
       } else {
         setisloding(false);
       }

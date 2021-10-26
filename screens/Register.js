@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Button,
   Image,
   Platform,
@@ -20,9 +21,9 @@ const Register = ({ navigation }) => {
   const [ImageUrl, setImageUrl] = useState(null);
   const [Name, setName] = useState("");
   const [email, setemail] = useState("");
-  const [phoneNumber, setphoneNumber] = useState("");
   const [password, setpassword] = useState("");
   const [passwordguide, setPasswordguide] = useState(false);
+  const [isloding, setisloding] = useState(false);
 
   const selectImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -44,6 +45,7 @@ const Register = ({ navigation }) => {
   };
 
   const saveData = async () => {
+    setisloding(true);
     await upload();
     var ref = await firebase.storage().ref().child(email);
     const url = await ref.getDownloadURL();
@@ -55,12 +57,23 @@ const Register = ({ navigation }) => {
         authUser.user.updateProfile({
           displayName: Name,
           photoURL: url,
-          phoneNumber: phoneNumber,
         });
       })
-      .catch((error) => alert(error));
+      .catch((error) => {
+        alert(error);
+        setisloding(false);
+      });
     navigation.replace("login");
   };
+  // if (isloding) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+  //       {/* <ActivityIndicator size='large'/> */}
+  //       <ActivityIndicator size="large" color="#2C6BED" />
+  //       <Text style={{ marginTop: 20 }}>Loading....</Text>
+  //     </View>
+  //   );
+  // }
   return (
     <View style={styles.registercontainer}>
       <View style={styles.Cardcontainer}>
@@ -86,13 +99,6 @@ const Register = ({ navigation }) => {
             value={Name}
             onChangeText={(e) => setName(e)}
           />
-          <Text style={styles.title}>Phone-Number</Text>
-          <TextInput
-            style={styles.input}
-            value={phoneNumber}
-            onChangeText={(e) => setphoneNumber(e)}
-            keyboardType="numeric"
-          />
           <Text style={styles.title}>E - Mail</Text>
           <TextInput
             style={styles.input}
@@ -114,23 +120,28 @@ const Register = ({ navigation }) => {
             </Text>
           )}
         </View>
-        <View style={styles.buttonContainer}>
-          <View style={styles.button}>
-            <Button
-              title="Register"
-              color="green"
-              onPress={saveData}
-              disabled={
-                Name && email && password && ImageUrl && phoneNumber
-                  ? false
-                  : true
-              }
-            />
+        {isloding ? (
+          <View style={styles.buttonContainer}>
+            <Text>Loading....</Text>
           </View>
-          <View style={styles.button}>
-            <Button title="login" onPress={() => navigation.replace("login")} />
+        ) : (
+          <View style={styles.buttonContainer}>
+            <View style={styles.button}>
+              <Button
+                title="Register"
+                color="green"
+                onPress={saveData}
+                disabled={Name && email && password && ImageUrl ? false : true}
+              />
+            </View>
+            <View style={styles.button}>
+              <Button
+                title="login"
+                onPress={() => navigation.replace("login")}
+              />
+            </View>
           </View>
-        </View>
+        )}
       </View>
     </View>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSelector } from "react-redux";
 import Register from "../screens/Register";
@@ -8,8 +8,23 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "../screens/Login";
+import TabScreen from "./TabScreen";
+import { getFocusedRouteNameFromRoute } from "@react-navigation/native";
 
 const Stack = createStackNavigator();
+
+// function getHeaderTitle(route) {
+//   const routeName = getFocusedRouteNameFromRoute(route) ?? "Home";
+
+//   switch (routeName) {
+//     case "Home":
+//       return "Home";
+//     case "Profile":
+//       return "My profile";
+//     case "Notification":
+//       return "Notification";
+//   }
+// }
 
 const Navigation = () => {
   const auth = useSelector((state) => state.Info.Auth);
@@ -33,6 +48,7 @@ const Navigation = () => {
     await checkAuth();
     setisloading(false);
   };
+
   useEffect(() => {
     loading();
   }, [auth]);
@@ -57,9 +73,17 @@ const Navigation = () => {
           component={Register}
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="Home">
-          {(props) => <HomeScreen {...props} checkAuth={checkAuth} />}
-        </Stack.Screen>
+        <Stack.Screen
+          name="home"
+          component={TabScreen}
+          // options={({ route }) => ({
+          //   headerTitle: getHeaderTitle(route),
+          // })}
+          // options={{ headerShown: false }}
+        />
+        {/* <Stack.Screen name="home">
+          {(props) => <TabScreen {...props} checkAuth={checkAuth} />}
+        </Stack.Screen> */}
       </Stack.Navigator>
     </NavigationContainer>
   );
