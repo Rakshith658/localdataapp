@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Button,
+  FlatList,
   Image,
   StyleSheet,
   Text,
@@ -12,11 +13,12 @@ import { firebase } from "@firebase/app";
 import * as ImagePicker from "expo-image-picker";
 import "firebase/auth";
 import * as firestorage from "firebase";
-// import { firebase as fireauth } from "@firebase/app";
 import "firebase/storage";
+import "firebase/firestore";
 import { Entypo } from "@expo/vector-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { currentUser } from "../store/action";
+import PostComponent from "../components/PostComponent";
 const profile = require("../assets/profilepic.png");
 
 const ProfileScreen = () => {
@@ -28,8 +30,10 @@ const ProfileScreen = () => {
   const [Name, setName] = useState(currentUserinfo?.displayName);
   const [email, setemail] = useState(currentUserinfo?.email);
   const [isloding, setisloding] = useState(false);
+  const [Data, setData] = useState([]);
 
   const dispatch = useDispatch();
+  var db = firestorage.firestore();
 
   const selectImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -42,6 +46,13 @@ const ProfileScreen = () => {
       setImageUrl(result.uri);
       setimageUpload(true);
     }
+  };
+  const getposts = async () => {
+    await db.collection("posts").onSnapshot((snapshot) => {
+      let a = snapshot.docs.map((d) => d.data());
+      let b = a.filter((d) => d.useruid === currentUserinfo?.uid);
+      setData(b);
+    });
   };
   const upload = async () => {
     const response = await fetch(ImageUrl);
@@ -87,6 +98,87 @@ const ProfileScreen = () => {
     setisloding(false);
     setisEditable(!isEditable);
   };
+  useEffect(() => {
+    getposts();
+    console.log("email");
+  }, []);
+  if (Data.length >= 1) {
+    return (
+      <FlatList
+        ListHeaderComponent={
+          <View style={styles.container}>
+            {isEditable ? (
+              <View style={styles.editecontainer}>
+                <TouchableWithoutFeedback onPress={selectImage}>
+                  <View style={styles.imagecontainer}>
+                    <Image
+                      source={
+                        ImageUrl
+                          ? {
+                              uri: ImageUrl,
+                            }
+                          : profile
+                      }
+                      style={styles.imageEdite}
+                    />
+
+                    <Entypo
+                      name="pencil"
+                      size={28}
+                      color="white"
+                      style={styles.icon}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+                <View style={styles.formcontrole}>
+                  <Text style={styles.title}>Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={Name}
+                    onChangeText={(e) => setName(e)}
+                  />
+                  <Text style={styles.title}>E-Mail</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={(e) => setemail(e)}
+                  />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.Info}>
+                <Image style={styles.image} source={{ uri: ImageUrl }} />
+                <View style={styles.InfoContainer}>
+                  <Text style={styles.title}>Name : {Name}</Text>
+                  <Text style={styles.title}>E-mail : {email}</Text>
+                </View>
+              </View>
+            )}
+            <View style={styles.buttonContainerleft}>
+              <Button
+                title={isEditable ? "Cancel" : "Refresh"}
+                color="gray"
+                onPress={
+                  isEditable ? () => setisEditable(!isEditable) : getposts
+                }
+              />
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                title={isEditable ? "Save" : "Edite"}
+                color="green"
+                disabled={isloding ? true : false}
+                onPress={isEditable ? save : () => setisEditable(!isEditable)}
+              />
+            </View>
+          </View>
+        }
+        data={Data}
+        keyExtractor={(item) => item.id}
+        renderItem={(item) => <PostComponent item={item.item} />}
+      />
+    );
+  }
   return (
     <View style={styles.container}>
       {isEditable ? (
@@ -136,6 +228,13 @@ const ProfileScreen = () => {
           </View>
         </View>
       )}
+      <View style={styles.buttonContainerleft}>
+        <Button
+          title={isEditable ? "Cancel" : "Refresh"}
+          color="gray"
+          onPress={isEditable ? () => setisEditable(!isEditable) : getposts}
+        />
+      </View>
       <View style={styles.buttonContainer}>
         <Button
           title={isEditable ? "Save" : "Edite"}
@@ -206,7 +305,15 @@ const styles = StyleSheet.create({
     width: 100,
     alignSelf: "flex-end",
     borderRadius: 10,
-    bottom: 30,
-    right: 30,
+    top: 20,
+    right: 20,
+  },
+  buttonContainerleft: {
+    position: "absolute",
+    width: 100,
+    alignSelf: "flex-end",
+    borderRadius: 10,
+    top: 20,
+    left: 20,
   },
 });

@@ -10,11 +10,12 @@ import {
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import data from "../data/data";
 import PostComponent from "../components/PostComponent";
 import { firebase } from "@firebase/app";
-
+import * as firestorage from "firebase";
+import "firebase/firestore";
 import "firebase/auth";
+import "firebase/storage";
 import { useDispatch, useSelector } from "react-redux";
 import { currentUser } from "../store/action";
 
@@ -23,11 +24,17 @@ const profile = require("../assets/profilepic.png");
 const HomeScreen = ({ navigation }) => {
   const [postImage, setpostImage] = useState(null);
   const [desc, setdesc] = useState("");
-  const [Data, setData] = useState(data);
+  const [imageUpload, setimageUpload] = useState(false);
+  const [isposting, setIsposting] = useState(false);
+  const [Data, setData] = useState([]);
   const [refreshing, setrefreshing] = useState(false);
 
   const dispatch = useDispatch();
 
+  let url;
+  let postuid;
+
+  var db = firestorage.firestore();
   const currentUserinfo = useSelector((state) => state.Info.auth);
 
   const getUserData = async () => {
@@ -43,83 +50,157 @@ const HomeScreen = ({ navigation }) => {
     });
     if (!result.cancelled) {
       setpostImage(result.uri);
+      setimageUpload(true);
     }
   };
 
-  const postIt = () => {
-    // console.log(desc);
-    // console.log(typeof desc);
-    // console.log(typeof parseInt(desc));
-    // const post = {
-    //   id: new Date().getTime(),
-    //   profile: ImageUrl ? ImageUrl : null,
-    //   name: Name,
-    //   desc: desc,
-    //   image: postImage ? postImage : null,
-    // };
-    // setData([...Data, post]);
-    // setpostImage(null);
-    // setdesc("");
+  const postIt = async () => {
+    postuid =
+      currentUserinfo?.uid + new Date().getTime().toString() + "file.png";
+
+    setIsposting(true);
+    const upload = async () => {
+      const response = await fetch(postImage);
+      const blob = await response.blob();
+      var ref = await firestorage.storage().ref().child(postuid);
+      return ref.put(blob);
+    };
+    if (imageUpload) {
+      await upload();
+      const ref = await firebase.storage().ref().child(postuid);
+      url = await ref.getDownloadURL();
+      setpostImage(null);
+    }
+    db.collection("posts")
+      .add({
+        id: firestorage.default.firestore.FieldValue.serverTimestamp(),
+        profile: currentUserinfo?.photoURL,
+        name: currentUserinfo?.displayName,
+        desc: desc,
+        image: imageUpload ? url : null,
+        useruid: currentUserinfo?.uid,
+      })
+      .catch((error) => {
+        console.error("Error adding document: ", error);
+      });
+    setdesc("");
+    setIsposting(false);
+  };
+  const getposts = () => {
+    db.collection("posts").onSnapshot((snapshot) => {
+      let a = snapshot.docs.map((d) => d.data());
+      setData(a);
+    });
   };
   useEffect(() => {
     setTimeout(() => {
       getUserData();
     }, 1000);
+    getposts();
   }, []);
-
+  if (Data.length >= 1) {
+    return (
+      <View style={styles.container}>
+        <FlatList
+          ListHeaderComponent={
+            <View style={styles.createContainer}>
+              <View style={styles.title}>
+                <Image
+                  source={
+                    currentUserinfo
+                      ? {
+                          uri: currentUserinfo.photoURL,
+                        }
+                      : profile
+                  }
+                  style={styles.image}
+                />
+                <Text style={styles.Name}>{currentUserinfo?.displayName}</Text>
+              </View>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="what's on your mind"
+                  value={desc}
+                  // keyboardType="numeric"
+                  // onChange={(e) => setdesc(e.target.value)}
+                  onChangeText={(e) => setdesc(e)}
+                />
+                {postImage && (
+                  <Image
+                    source={{
+                      uri: postImage,
+                    }}
+                    style={styles.postimage}
+                  />
+                )}
+              </View>
+              <View style={styles.buttonContainer}>
+                {!postImage && <Button title="Select" onPress={selectImage} />}
+                {isposting ? null : (
+                  <Button
+                    title="Post"
+                    color="green"
+                    onPress={postIt}
+                    disabled={desc ? false : true}
+                  />
+                )}
+              </View>
+            </View>
+          }
+          data={Data}
+          keyExtractor={(item) => item.id}
+          renderItem={(item) => <PostComponent item={item.item} />}
+        />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
-      <FlatList
-        // onRefresh={getUserData}
-        // refreshing={refreshing}
-        ListHeaderComponent={
-          <View style={styles.createContainer}>
-            <View style={styles.title}>
-              <Image
-                source={
-                  currentUserinfo
-                    ? {
-                        uri: currentUserinfo.photoURL,
-                      }
-                    : profile
-                }
-                style={styles.image}
-              />
-              <Text style={styles.Name}>{currentUserinfo?.displayName}</Text>
-            </View>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="what's on your mind"
-                value={desc}
-                // keyboardType="numeric"
-                // onChange={(e) => setdesc(e.target.value)}
-                onChangeText={(e) => setdesc(e)}
-              />
-              {postImage && (
-                <Image
-                  source={{
-                    uri: postImage,
-                  }}
-                  style={styles.postimage}
-                />
-              )}
-            </View>
-            <View style={styles.buttonContainer}>
-              {!postImage && <Button title="Select" onPress={selectImage} />}
-              <Button
-                title="Post"
-                color="green"
-                onPress={postIt}
-                // disabled={desc ? false : true}
-              />
-            </View>
-          </View>
-        }
-        data={Data}
-        keyExtractor={(item) => item.id}
-        renderItem={(item) => <PostComponent item={item.item} />}
-      />
+      <View style={styles.createContainer}>
+        <View style={styles.title}>
+          <Image
+            source={
+              currentUserinfo
+                ? {
+                    uri: currentUserinfo.photoURL,
+                  }
+                : profile
+            }
+            style={styles.image}
+          />
+          <Text style={styles.Name}>{currentUserinfo?.displayName}</Text>
+        </View>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="what's on your mind"
+            value={desc}
+            // keyboardType="numeric"
+            // onChange={(e) => setdesc(e.target.value)}
+            onChangeText={(e) => setdesc(e)}
+          />
+          {postImage && (
+            <Image
+              source={{
+                uri: postImage,
+              }}
+              style={styles.postimage}
+            />
+          )}
+        </View>
+        <View style={styles.buttonContainer}>
+          {!postImage && <Button title="Select" onPress={selectImage} />}
+          {isposting ? null : (
+            <Button
+              title="Post"
+              color="green"
+              onPress={postIt}
+              disabled={desc ? false : true}
+            />
+          )}
+        </View>
+      </View>
     </View>
   );
 };
