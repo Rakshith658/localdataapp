@@ -11,6 +11,7 @@ import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import { firebase } from "@firebase/app";
 
 import "firebase/auth";
+import ChatScreen from "../screens/ChatScreen";
 
 const Tab = createBottomTabNavigator();
 function getHeaderTitle(route) {
@@ -19,6 +20,8 @@ function getHeaderTitle(route) {
   switch (routeName) {
     case "Home":
       return "Home";
+    case "Chat":
+      return "Chats";
     case "Profile":
       return "My profile";
     case "Notification":
@@ -54,6 +57,19 @@ const TabScreen = ({ navigation, route }) => {
         options={{
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name="chatbox-ellipses-outline"
+              size={size}
+              color={color}
+            />
           ),
         }}
       />

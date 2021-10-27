@@ -100,7 +100,6 @@ const ProfileScreen = () => {
   };
   useEffect(() => {
     getposts();
-    console.log("email");
   }, []);
   if (Data.length >= 1) {
     return (

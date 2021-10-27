@@ -1,11 +1,15 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import NotificationComponents from "../components/NotificationComponents";
+import Data from "../data/data";
 
 const NotificationScreen = () => {
   return (
-    <View>
-      <Text>NotificationScreen</Text>
-    </View>
+    <FlatList
+      data={Data}
+      keyExtractor={(item) => item.id}
+      renderItem={(item) => <NotificationComponents item={item.item} />}
+    />
   );
 };
 
