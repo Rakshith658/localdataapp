@@ -73,12 +73,13 @@ const HomeScreen = ({ navigation }) => {
     }
     db.collection("posts")
       .add({
-        id: firestorage.default.firestore.FieldValue.serverTimestamp(),
+        id: new Date().getTime().toString(),
         profile: currentUserinfo?.photoURL,
         name: currentUserinfo?.displayName,
         desc: desc,
         image: imageUpload ? url : null,
         useruid: currentUserinfo?.uid,
+        likes: [],
       })
       .catch((error) => {
         console.error("Error adding document: ", error);
@@ -88,7 +89,12 @@ const HomeScreen = ({ navigation }) => {
   };
   const getposts = () => {
     db.collection("posts").onSnapshot((snapshot) => {
-      let a = snapshot.docs.map((d) => d.data());
+      let a = snapshot.docs.map((d) => {
+        let a = {};
+        a = d.data();
+        a.postid = d.id;
+        return a;
+      });
       setData(a);
     });
   };
@@ -148,7 +154,9 @@ const HomeScreen = ({ navigation }) => {
               </View>
             </View>
           }
-          data={Data}
+          data={Data.sort((a, b) => {
+            return b.id - a.id;
+          })}
           keyExtractor={(item) => item.id}
           renderItem={(item) => <PostComponent item={item.item} />}
         />

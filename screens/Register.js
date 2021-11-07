@@ -9,10 +9,14 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   View,
+  KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as firebase from "firebase";
 import { firebase as fireauth } from "@firebase/app";
+import { Entypo } from "@expo/vector-icons";
+
 import "firebase/storage";
 import "firebase/auth";
 const profile = require("../assets/profilepic.png");
@@ -75,7 +79,7 @@ const Register = ({ navigation }) => {
   //   );
   // }
   return (
-    <View style={styles.registercontainer}>
+    <KeyboardAvoidingView style={styles.registercontainer}>
       <View style={styles.Cardcontainer}>
         <Text style={styles.registerText}>Register</Text>
         <TouchableWithoutFeedback onPress={selectImage}>
@@ -90,6 +94,7 @@ const Register = ({ navigation }) => {
               }
               style={styles.image}
             />
+            <Entypo name="pencil" size={28} color="black" style={styles.icon} />
           </View>
         </TouchableWithoutFeedback>
         <View style={styles.formcontrole}>
@@ -113,6 +118,8 @@ const Register = ({ navigation }) => {
             onChangeText={(e) => setpassword(e)}
             secureTextEntry
             onFocus={() => setPasswordguide(true)}
+            returnKeyType="next"
+            onEndEditing={() => Keyboard.dismiss()}
           />
           {passwordguide && (
             <Text style={styles.passwordguide}>
@@ -143,7 +150,7 @@ const Register = ({ navigation }) => {
           </View>
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -183,8 +190,13 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: "black",
+  },
+  icon: {
+    position: "absolute",
+    left: "5%",
+    bottom: "5%",
   },
   formcontrole: {
     width: "80%",

@@ -1,11 +1,61 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
+import * as firestorage from "firebase";
+import "firebase/firestore";
+import { useSelector } from "react-redux";
 
 const profile = require("../assets/profilepic.png");
 
 const PostComponent = ({ item }) => {
+  const currentUserinfo = useSelector((state) => state.Info.auth);
+
   const [color, setcolor] = useState("black");
+  const [isliked, setisliked] = useState(null);
+  var db = firestorage.firestore();
+  const getpost = () => {
+    var docRef = db.collection("posts").doc(item.postid);
+    docRef
+      .get()
+      .then((doc) => {
+        if (doc.exists) {
+          const a = doc.data();
+          const b = a.likes.find((e) => e === currentUserinfo?.uid);
+          if (b === undefined) {
+            setisliked(false);
+          } else {
+            setisliked(true);
+          }
+        } else {
+          console.log("No such document!");
+        }
+      })
+      .catch((error) => {
+        console.log("Error getting document:", error);
+      });
+  };
+  const likePost = () => {
+    if (isliked) {
+      item.likes.pop(currentUserinfo?.uid);
+    } else {
+      item.likes.push(currentUserinfo?.uid);
+    }
+    db.collection("posts")
+      .doc(item.postid)
+      .set({
+        ...item,
+      })
+      .then(() => {
+        setisliked(!isliked);
+      })
+      .catch((error) => {
+        console.error("Error writing document: ", error);
+      });
+  };
+  useEffect(() => {
+    getpost();
+  }, []);
+
   return (
     <View style={styles.postContainer}>
       <View style={styles.Info}>
@@ -25,8 +75,8 @@ const PostComponent = ({ item }) => {
         <AntDesign
           name="like2"
           size={24}
-          color={color}
-          onPress={() => setcolor("blue")}
+          color={isliked ? "blue" : "black"}
+          onPress={likePost}
         />
         <FontAwesome5 name="comments" size={24} color="black" />
       </View>

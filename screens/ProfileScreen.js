@@ -172,7 +172,9 @@ const ProfileScreen = () => {
             </View>
           </View>
         }
-        data={Data}
+        data={Data.sort((a, b) => {
+          return b.id - a.id;
+        })}
         keyExtractor={(item) => item.id}
         renderItem={(item) => <PostComponent item={item.item} />}
       />
